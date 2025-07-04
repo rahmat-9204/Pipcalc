@@ -50,22 +50,15 @@ def handle_message(message):
     elif 'pips' not in user:
         try:
             user['pips'] = float(text)
-            bot.send_message(chat_id, "✅ حالا لطفاً مقدار ارزش هر پیپ را به دلار وارد کنید (مثلاً 10):")
-        except ValueError:
-            bot.send_message(chat_id, "❗ لطفاً عدد معتبر وارد کنید.")
-
-    elif 'pip_value' not in user:
-        try:
-            user['pip_value'] = float(text)
-            lot = user['target'] / (user['pips'] * user['pip_value'])
+            pip_value = 10
+            lot = user['target'] / (user['pips'] * pip_value)
             lot = round(lot, 3)
 
             msg = f"""✅ محاسبه انجام شد:
 
 🔹 جفت‌ارز: {user['pair']}
-💵 هدف دلاری: {user['target']} دلار
+💵 هدف: {user['target']} دلار
 📏 فاصله پیپ: {user['pips']} پیپ
-💰 ارزش هر پیپ: {user['pip_value']} دلار
 
 📊 مقدار لات مناسب: {lot} لات"""
 
@@ -74,11 +67,11 @@ def handle_message(message):
         except ValueError:
             bot.send_message(chat_id, "❗ لطفاً عدد معتبر وارد کنید.")
 
-# اجرای ربات در ترد جدا
+# ربات را در یک ترد جدا اجرا می‌کنیم
 def run_bot():
     bot.infinity_polling()
 
-# مسیر وب برای سازگاری با Render
+# اجرای سرور Flask برای Render (پورت باید باز شود)
 @app.route('/')
 def home():
     return "ربات آنلاین است ✅"
