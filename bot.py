@@ -1,13 +1,14 @@
 import os
+import threading
 from dotenv import load_dotenv
 import telebot
+from flask import Flask
 
-# بارگذاری متغیرهای محیطی از فایل .env
+# بارگذاری توکن از فایل .env
 load_dotenv()
-
-# دریافت توکن از متغیر محیطی
 API_TOKEN = os.getenv("BOT_TOKEN")
 bot = telebot.TeleBot(API_TOKEN)
+app = Flask(__name__)
 
 # حافظه موقتی کاربران
 user_data = {}
@@ -29,19 +30,16 @@ def handle_message(message):
     chat_id = message.chat.id
     text = message.text.strip()
 
-    # اگر کاربر هنوز با /start شروع نکرده
     if chat_id not in user_data:
         bot.send_message(chat_id, "برای شروع از /start استفاده کنید.")
         return
 
     user = user_data[chat_id]
 
-    # مرحله ۱: دریافت جفت‌ارز
     if 'pair' not in user:
         user['pair'] = text
         bot.send_message(chat_id, "✅ حالا لطفاً مقدار سود یا ضرر هدف را به دلار وارد کنید (مثلاً 50):")
 
-    # مرحله ۲: دریافت هدف دلاری
     elif 'target' not in user:
         try:
             user['target'] = float(text)
@@ -49,11 +47,10 @@ def handle_message(message):
         except ValueError:
             bot.send_message(chat_id, "❗ لطفاً یک عدد معتبر وارد کنید.")
 
-    # مرحله ۳: دریافت پیپ و محاسبه
     elif 'pips' not in user:
         try:
             user['pips'] = float(text)
-            pip_value = 10  # فرض مقدار هر پیپ برای یک لات کامل (مثلاً در EUR/USD)
+            pip_value = 10
             lot = user['target'] / (user['pips'] * pip_value)
             lot = round(lot, 3)
 
@@ -70,5 +67,16 @@ def handle_message(message):
         except ValueError:
             bot.send_message(chat_id, "❗ لطفاً عدد معتبر وارد کنید.")
 
-# اجرای دائمی ربات
-bot.infinity_polling()
+# ربات را در یک ترد جدا اجرا می‌کنیم
+def run_bot():
+    bot.infinity_polling()
+
+# اجرای سرور Flask برای Render (پورت باید باز شود)
+@app.route('/')
+def home():
+    return "ربات آنلاین است ✅"
+
+if __name__ == "__main__":
+    threading.Thread(target=run_bot).start()
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
